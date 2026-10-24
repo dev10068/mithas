@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bill Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#e9e6dc;--panel:#fbfaf6;--ink:#1d1b16;--mute:#6b665a;--line:#cfcabb;--acc:#1f5f4a;--accink:#fff;--paper:#fffefb;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171612;--panel:#22211b;--ink:#ece8da;--mute:#a09a88;--line:#3a382e;--acc:#5fc2a0;--accink:#0f1f19;--paper:#f3f0e4}}
+:root[data-theme="dark"]{--bg:#171612;--panel:#22211b;--ink:#ece8da;--mute:#a09a88;--line:#3a382e;--acc:#5fc2a0;--accink:#0f1f19;--paper:#f3f0e4}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 "IBM Plex Sans",system-ui,sans-serif}
+.wrap{max-width:560px;margin:0 auto;padding:14px 12px 40px}
+h1{font-size:20px;margin:6px 0 2px}
+.sub{color:var(--mute);margin:0 0 14px;font-size:13px}
+details{background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:10px}
+summary{padding:12px 14px;font-weight:600;cursor:pointer}
+.body{padding:0 14px 14px;display:grid;gap:8px}
+label{display:grid;gap:3px;font-size:12px;color:var(--mute)}
+input,select{font:inherit;font-size:15px;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:6px;padding:8px;width:100%;min-width:0}
+input:focus,select:focus,button:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.item{border:1px solid var(--line);border-radius:6px;padding:10px;display:grid;gap:8px}
+button{font:inherit;font-weight:600;border-radius:6px;border:1px solid var(--acc);padding:10px 14px;cursor:pointer;background:transparent;color:var(--acc)}
+button.pri{background:var(--acc);color:var(--accink)}
+button.del{border-color:var(--line);color:var(--mute);padding:6px 10px;justify-self:end}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink)}
+.chk input{width:auto}
+.sheet{background:var(--paper);color:#1d1b16;border-radius:2px;padding:16px 10px;margin-top:14px;overflow-x:auto;box-shadow:0 1px 0 var(--line)}
+pre{margin:0 auto;width:max-content;font:12px/1.4 "DejaVu Sans Mono",Menlo,Consolas,ui-monospace,monospace}
+.note{color:var(--mute);font-size:12px;margin-top:8px}
+.big{font-size:1.8em;font-weight:700}
+@media print{
+ @page{margin:4mm}
+ body{background:#fff}
+ .ui{display:none!important}
+ .wrap{padding:0;max-width:none}
+ .sheet{margin:0;padding:0;box-shadow:none;overflow:visible;background:#fff}
+ pre{font-size:11px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="ui">
+<h1>Bill Generator</h1>
+<p class="sub">GST sale bill, thermal-receipt layout. Fill in, then Print / Save PDF.</p>
+
+<details open><summary>Your business</summary><div class="body">
+<label>GSTIN (top line)<input id="gstin" data-save value="09AABFH0185J2ZC"></label>
+<label>Business name<input id="biz" data-save value="Hotel Pandit"></label>
+<label>Address<input id="addr" data-save value="M.G PARK , CANTT, KANPUR"></label>
+<label>Address line 2 (slip layout, optional)<input id="addr2" data-save></label>
+<label>Outlet / branch line<input id="outlet" data-save value="PANDIT"></label>
+<label>Mobile<input id="phone" data-save value="9889063888"></label>
+<label>Billed by (User Name)<input id="user" data-save value="SAURABH"></label>
+<label>Tagline<input id="tag" data-save value="SHUDDHTA HAMARI PARAMPARA"></label>
+<label>Software credit line (optional)<input id="sw" data-save value="A Dataman software 0512-231719"></label>
+<div class="g2"><label>POS state (slip layout)<input id="pos" data-save value="UTTAR PRADESH"></label></div>
+<label>Software By Retailware - number (slip layout)<input id="swn" data-save inputmode="tel" value="9890002875"></label>
+</div></details>
+
+<details open><summary>Bill details</summary><div class="body">
+<label>Bill format<select id="fmt"><option value="b">Tax Invoice (slip layout, date-time auto)</option><option value="a">Sale Bill (Hotel Pandit layout)</option></select></label>
+<label class="chk"><input id="showCust" type="checkbox"> Customer ki detail slip mein chhapo (neeche Customer section bharo)</label>
+<div class="g2"><label>Bill no.<input id="billNo"></label><label>Date and time<input id="dt" type="datetime-local"></label></div>
+<div class="g3"><label>Payment<select id="pay"><option>CASH</option><option>UPI</option><option>CARD</option><option>CREDIT</option></select></label><label>Token no.<input id="token"></label><label>Order Id<input id="orderId"></label></div>
+<label>FSSAI Number (bill ke end mein)<input id="fssai" data-save inputmode="numeric"></label>
+</div></details>
+
+<details open><summary>Customer</summary><div class="body">
+<label>Name / company<input id="cName" data-save value="A TO Z PROTECTION &amp; AMC"></label>
+<label>Address<input id="cAddr" data-save value="D-23,GYATRI PURAM SBI CC"></label>
+<div class="g2"><label>City<input id="cCity" data-save value="LUCKNOW"></label><label>Mobile<input id="cPh" data-save value="9415023373"></label></div>
+<label>GSTIN<input id="cGst" data-save value="09AAJCA1522D2Z3"></label>
+<label>Name (second block)<input id="cName2" data-save value="A TO Z PROTECTION &amp; AMC SER"></label>
+<label>Address (second block)<input id="cAddr2" data-save value="D-23,GYATRI PURAM SBI COLONY"></label>
+</div></details>
+
+<details open><summary>Items</summary><div class="body">
+<div id="items"></div>
+<button id="add" type="button">Add item</button>
+<div class="g2"><label>Discount (₹, whole bill)<input id="disc" type="number" inputmode="decimal" value="0" min="0"></label>
+<label class="chk" style="align-self:end"><input id="inter" type="checkbox"> Other state (IGST)</label></div>
+<label class="chk"><input id="rate_incl" type="checkbox" checked> Rates include GST</label>
+</div></details>
+
+<div class="row"><button class="pri" id="print" type="button">Print / Save PDF</button><button id="reset" type="button">New bill</button></div>
+</div>
+
+<div class="sheet"><pre id="out"></pre></div>
+<p class="note ui">Check GSTIN, HSN/SAC and tax rates with your CA before issuing bills.</p>
+</div>
+
+<script>
+(function(){
+var W=46, $=function(i){return document.getElementById(i)};
+var items=[{n:"",h:"",u:"PCS",q:1,r:0,g:5}];
+var LS={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+function pad(s,n){s=String(s);return s.length>=n?s.slice(0,n):s+" ".repeat(n-s.length)}
+function lp(s,n){s=String(s);return s.length>=n?s:" ".repeat(n-s.length)+s}
+function f2(n){return (Math.round((n+Number.EPSILON)*100)/100).toFixed(2)}
+function ctr(s){s=String(s).slice(0,W);return " ".repeat(Math.max(0,Math.floor((W-s.length)/2)))+s}
+function hr(){return "-".repeat(W)}
+
+var ones=["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"];
+var tens=["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];
+function b100(n){return n<20?ones[n]:tens[Math.floor(n/10)]+(n%10?" "+ones[n%10]:"")}
+function b1000(n){var s="";if(n>=100){s=ones[Math.floor(n/100)]+" Hundred";n%=100;if(n)s+=" "}return s+b100(n)}
+function words(n){
+ if(n===0)return "Zero";var p=[];
+ var cr=Math.floor(n/1e7);n%=1e7;var lk=Math.floor(n/1e5);n%=1e5;var th=Math.floor(n/1e3);n%=1e3;
+ if(cr)p.push(b100(cr)+" Crore");if(lk)p.push(b100(lk)+" Lakh");if(th)p.push(b100(th)+" Thousand");if(n)p.push(b1000(n));
+ return p.join(" ");
+}
+
+function renderItems(){
+ var box=$("items");box.innerHTML="";
+ items.forEach(function(it,i){
+  var d=document.createElement("div");d.className="item";
+  d.innerHTML='<label>Item name<input data-k="n"></label>'+
+  '<div class="g3"><label>HSN / SAC<input data-k="h"></label><label>Unit<input data-k="u"></label><label>GST %<select data-k="g"><option>0</option><option>5</option><option>12</option><option>18</option><option>28</option></select></label></div>'+
+  '<div class="g2"><label>Qty<input data-k="q" type="number" inputmode="decimal" min="0" step="any"></label><label>Rate (₹)<input data-k="r" type="number" inputmode="decimal" min="0" step="any"></label></div>'+
+  '<button class="del" type="button">Remove</button>';
+  d.querySelectorAll("[data-k]").forEach(function(el){
+   var k=el.getAttribute("data-k");el.value=it[k];
+   el.addEventListener("input",function(){it[k]=(k==="q"||k==="r"||k==="g")?(parseFloat(el.value)||0):el.value;draw()});
+  });
+  d.querySelector(".del").addEventListener("click",function(){if(items.length>1){items.splice(i,1);renderItems();draw()}});
+  box.appendChild(d);
+ });
+}
+
+function stamp(v){
+ if(!v)return "";var a=v.split("T"),d=a[0].split("-");return d[2]+"/"+d[1]+"/"+d[0]+" "+(a[1]||"");
+}
+function kv(k,v){return pad(k,13)+": "+v}
+
+function draw(){
+ var inter=$("inter").checked,incl=$("rate_incl").checked;
+ var disc=Math.max(0,parseFloat($("disc").value)||0);
+ var rows=items.filter(function(it){return it.n||it.r}).map(function(it){
+  var amt=it.q*it.r;return {it:it,base:incl?amt/(1+it.g/100):amt};
+ });
+ var gross=rows.reduce(function(s,r){return s+r.base},0);
+ if(disc>gross)disc=gross;
+ var groups={},taxable=0,tax=0;
+ rows.forEach(function(r){
+  var share=gross?disc*r.base/gross:0,tv=r.base-share,t=tv*r.it.g/100;
+  var g=groups[r.it.g]||(groups[r.it.g]={tv:0,t:0});g.tv+=tv;g.t+=t;taxable+=tv;tax+=t;
+ });
+ var total=taxable+tax,net=Math.round(total),ro=net-total;
+
+ var L=[];
+ if($("fmt").value==="b"){
+  var DT=new Date(),mon=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var dd=("0"+DT.getDate()).slice(-2)+"-"+mon[DT.getMonth()]+"-"+String(DT.getFullYear()).slice(-2);
+  var hh=DT.getHours(),ap=hh>=12?"PM":"AM";hh=hh%12||12;
+  var tm=("0"+hh).slice(-2)+":"+("0"+DT.getMinutes()).slice(-2)+" "+ap;
+  var sc=parseInt(($("gstin").value||"").slice(0,2),10)||"";
+  var Wb=42,hb="-".repeat(Wb);
+  var cb=function(s){s=String(s).slice(0,Wb);return " ".repeat(Math.max(0,Math.floor((Wb-s.length)/2)))+s};
+  L.push("\u0002"+cb($("biz").value.toUpperCase()));
+  L.push("\u0002"+cb($("addr").value));
+  if($("addr2").value)L.push("\u0002"+cb($("addr2").value));
+  L.push("\u0002"+cb("Tel No : "+$("phone").value));
+  L.push(cb("GSTIN:"+$("gstin").value));
+  L.push(cb("CREDIT INVOICE"));
+  var bn="Bill No :"+$("billNo").value;
+  L.push("\u0001"+" ".repeat(Math.max(0,Math.floor((Wb/1.8-bn.length)/2)))+bn);
+  L.push(pad("Date :"+dd,28)+"Time: "+tm);
+  if($("showCust").checked){var cnm=String($("cName").value||"").toUpperCase(),cgs=String($("cGst").value||"").toUpperCase(),cw=Wb-6,ci;if(cnm){L.push("Name :"+cnm.slice(0,cw));for(ci=cw;ci<cnm.length;ci+=cw)L.push("      "+cnm.slice(ci,ci+cw));}if(cgs)L.push(cb("CUST GSTIN :"+cgs));}
+  L.push(pad("POS :"+$("pos").value,29)+"State Code :"+sc);
+  
+  L.push(hb);
+  L.push(pad("",8)+pad("ITEM",14)+pad("RATE",8)+lp("TOTAL",Wb-30));
+  L.push(pad("HSN",8)+"QTY");
+  L.push(hb);
+  var tq=0,ti=0;
+  rows.forEach(function(r){var lt=r.it.q*r.it.r;tq+=r.it.q;ti+=lt;
+   var nm=(r.it.n||"Item").toUpperCase(),parts=[],pi;
+   for(pi=0;pi<nm.length;pi+=13)parts.push(nm.slice(pi,pi+13));
+   parts.forEach(function(p,ix){
+    if(ix<parts.length-1)L.push(pad("",8)+p);
+    else L.push(pad("",8)+pad(p,14)+pad(f2(r.it.r),8)+lp(f2(lt),Wb-30));
+   });
+   L.push(pad(r.it.h||"",8)+f2(r.it.q));
+  });
+  if(rows.length)L.push(hb);
+  L.push(pad("Items/Qty :"+rows.length+" /"+f2(tq),22)+pad("Total:",8)+lp(f2(ti),12));
+  L.push(pad("",22)+pad("Net :",8)+lp(f2(net),12));
+  L.push(hb);
+  L.push("Mode Of Payments:-");
+  L.push(pad("",14)+pad($("pay").value,16)+lp(f2(net),12));
+  L.push(hb);
+  L.push("The Invoice includes following Taxes.");
+  L.push(hb);
+  L.push(pad("GST",10)+lp("Taxable",10)+lp(inter?"IGST":"SGST",11)+(inter?"":lp("CGST",11)));
+  Object.keys(groups).sort(function(a,b){return a-b}).forEach(function(k){var g=groups[k];
+   L.push(pad("@ "+k+"%",10)+lp(f2(g.tv),10)+(inter?lp(f2(g.t),11):lp(f2(g.t/2),11)+lp(f2(g.t/2),11)));
+  });
+  L.push(hb);
+  L.push(pad("Total",20)+(inter?lp(f2(tax),11):lp(f2(tax/2),11)+lp(f2(tax/2),11)));
+  L.push(hb);
+  if($("swn").value)L.push("\u0002"+cb("Software By Retailware - "+$("swn").value));
+  L.push("\u0002"+cb("********* Thank You ! Visit Again !! ****"));
+  if($("fssai").value){L.push("");L.push("FSSAI Number: "+$("fssai").value);}
+  var esc=function(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;")};
+  $("out").innerHTML=L.map(function(x){x=esc(x);if(x.charAt(0)==="\u0001")return '<span class="big">'+x.slice(1)+'</span>';if(x.charAt(0)==="\u0002")return '<b>'+x.slice(1)+'</b>';return x}).join("\n");
+  return;
+ }
+ L.push("GSTIN No .: "+$("gstin").value);
+ L.push("");
+ L.push(ctr($("biz").value.toUpperCase()));
+ L.push(ctr($("addr").value));
+ L.push(ctr($("outlet").value.toUpperCase()));
+ L.push(ctr("SALE BILL"));
+ var mob="MOBILE NO: "+$("phone").value, tk=$("token").value?"Token No. "+$("token").value:"";
+ L.push(" "+mob+(tk?"     "+tk:""));
+ var cn=$("cName").value;
+ L.push(kv("Company Name",cn.toUpperCase()));
+ L.push(kv("Address",$("cAddr").value.toUpperCase()));
+ L.push(kv("City",$("cCity").value.toUpperCase()));
+ L.push(kv("GSTIN No.",$("cGst").value.toUpperCase()));
+ L.push(kv("Order Id",$("orderId").value));
+ L.push(hr());
+ L.push(kv("Name",$("cName2").value.toUpperCase()));
+ L.push(kv("Address",$("cAddr2").value.toUpperCase()));
+ L.push(kv("Mobile No.",$("cPh").value));
+ L.push(kv("GST No.",$("cGst").value.toUpperCase()));
+ L.push(hr());
+ L.push("Bill No. : "+$("billNo").value+"  Date : "+stamp($("dt").value));
+ L.push(hr());
+ L.push(pad("Item Name",15)+pad("UNIT",5)+lp("Qty.",7)+lp("Rate",8)+lp("Amount",11));
+ L.push("HSN / SAC Code");
+ L.push(hr());
+ rows.forEach(function(r){
+  var q=r.it.q,rate=q?r.base/q:0;
+  L.push(pad(r.it.n||"Item",15)+pad(r.it.u||"",5)+lp(f2(q),7)+lp(f2(rate),8)+lp(f2(r.base),11));
+  L.push(pad(r.it.h||"",21)+lp(r.it.g+" %",3));
+  if((r.it.n||"").length>15)L[L.length-2]=pad((r.it.n||"").slice(0,15),15)+L[L.length-2].slice(15);
+ });
+ L.push(hr());
+ var m=function(a,b){L.push(" "+pad(a,26)+lp(f2(b),12))};
+ m("GROSS AMOUNT",gross);m("DISCOUNT",disc);
+ if(inter){m("IGST",tax)}else{m("SGST",tax/2);m("CGST",tax/2)}
+ m("CESS",0);m("ROUND OFF",ro);m("NET AMOUNT",net);
+ L.push(hr());
+ L.push("Rupees "+words(net)+" Only");
+ L.push("");
+ var keys=Object.keys(groups).sort(function(a,b){return a-b});
+ if(keys.length){
+  var cols=inter?[7,10,10]:[7,10,8,8];
+  var bd="+"+cols.map(function(c){return "-".repeat(c)}).join("+")+"+";
+  var row=function(a){return "|"+a.map(function(x,i){return lp(x,cols[i]-1)+" "}).join("|")+"|"};
+  L.push(bd);
+  L.push(row(inter?["Tax%","Txb.Amt.","IGST"]:["Tax%","Txb.Amt.","CGST","SGST"]));
+  keys.forEach(function(k){var g=groups[k];
+   L.push(row(inter?[f2(+k),f2(g.tv),f2(g.t)]:[f2(+k),f2(g.tv),f2(g.t/2),f2(g.t/2)]));
+  });
+  L.push(bd);
+ }
+ L.push("");
+ L.push("Payment : "+$("pay").value);
+ L.push("User Name : "+$("user").value);
+ if($("tag").value)L.push($("tag").value.toUpperCase());
+ L.push("E & O E");
+ if($("sw").value)L.push("**"+$("sw").value+"**");
+ $("out").textContent=L.join("\n");
+}
+
+document.querySelectorAll("[data-save]").forEach(function(el){
+ var v=LS.get("bg_"+el.id);if(v!==null)el.value=v;
+ el.addEventListener("input",function(){LS.set("bg_"+el.id,el.value)});
+});
+
+function now(){var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
+function newBill(){
+ var n=parseInt(LS.get("bg_seq")||"0",10)+1;LS.set("bg_seq",String(n));
+ var t=now();
+ $("billNo").value="B"+t.slice(2,4)+t.slice(5,7)+("0000"+n).slice(-5);
+ $("dt").value=t;
+ ["token","orderId"].forEach(function(i){$(i).value=""});
+ $("disc").value="0";items=[{n:"",h:"",u:"PCS",q:1,r:0,g:5}];renderItems();draw();
+}
+
+["cName","cAddr","cCity","cPh","cGst","cName2","cAddr2","orderId"].forEach(function(i){$(i).addEventListener("input",function(){$("showCust").checked=true})});
+document.querySelectorAll(".ui input,.ui select").forEach(function(el){el.addEventListener("input",draw);el.addEventListener("change",draw)});
+$("add").addEventListener("click",function(){items.push({n:"",h:"",u:"PCS",q:1,r:0,g:5});renderItems();draw()});
+$("print").addEventListener("click",function(){draw();window.print()});
+$("fmt").addEventListener("change",function(){if($("fmt").value==="b")$("rate_incl").checked=true;draw()});
+$("reset").addEventListener("click",newBill);
+newBill();
+})();
+</script>
+</body>
+</html>
